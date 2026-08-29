@@ -1,0 +1,563 @@
+import type { LessonContent } from "./types";
+
+/**
+ * Phase 21 Complete CRUD Vertical Slice (L1–L3).
+ */
+export const LESSONS_P21: LessonContent[] = [
+  {
+    id: "p21-l1",
+    phaseId: "p21",
+    title: "Specifying the Task Module: From Requirements to ERD",
+    level: "Full-Stack Developer",
+    minutes: 40,
+    summary:
+      "Design an enterprise-grade Task Module vertical slice from scratch. Translate business specifications into a normalized Entity-Relationship Diagram (ERD), establish state machine transitions, define multi-tenant foreign keys, and configure PostgreSQL performance indexes.",
+    prerequisites: [
+      "p14-l1 — Relational Modeling, Keys & Normalization",
+      "p15-l1 — Prisma Schema 7.9.15: Models, Enums & Relations",
+    ],
+    objectives: [
+      "Translate raw business requirements into a strict 3NF database schema.",
+      "Model explicit state machine transitions (`TODO` → `IN_PROGRESS` → `IN_REVIEW` → `DONE`).",
+      "Design compound PostgreSQL indexes on `(workspaceId, status, createdAt)` for high-speed filtered queries.",
+      "Incorporate audit trail columns (`createdAt`, `updatedAt`, `deletedAt`, `version`, `createdById`).",
+    ],
+    simple:
+      "Before writing a single line of backend or frontend code, professional engineers design the data model. If your database schema is poorly structured, every controller, query, and UI component built on top of it will be complicated and buggy. In this lesson, we specify the Task entity with tenant isolation, status enums, priority ratings, and soft-delete capabilities.",
+    why:
+      "Fixing a broken database schema after going to production requires complex data migrations and causes downtime. Designing the ERD correctly up front guarantees smooth development across the entire stack.",
+    mentalModel: {
+      title: "The Architectural Blueprint & Foundation Footings",
+      body: "You would never build a skyscraper by putting up drywall and installing chandeliers first. The database ERD and state machine are the concrete foundation footings poured into bedrock. When the foundation is plumb, level, and reinforced with indexes, the rest of the building (NestJS APIs, React UI) rises smoothly.",
+    },
+    sections: [
+      {
+        heading: "1. Business Specifications & Status State Machine",
+        body: [
+          "Our Task entity operates within a multi-tenant workspace architecture.",
+          "Allowed state transitions must be strictly enforced.",
+        ],
+        code: [
+          {
+            file: "SPECIFICATION.md",
+            lang: "text",
+            code: [
+              "STATE MACHINE TRANSITIONS:",
+              "  [TODO] ───────────────> [IN_PROGRESS] ───────────────> [IN_REVIEW] ───────────────> [DONE]",
+              "    │                           │                              │                       │",
+              "    └───────────────────────────┴──────────────────────────────┴───────────────────────┘",
+              "                                  │ (Can transition directly to [ARCHIVED])",
+              "                                  ▼",
+              "                             [ARCHIVED]",
+              "",
+              "TENANT ISOLATION RULES:",
+              "  • Every Task belongs to exactly ONE Workspace.",
+              "  • Users can ONLY view/edit tasks in workspaces where they hold active membership.",
+              "  • Soft delete flag (deletedAt) hides tasks without purging historical audit logs.",
+            ].join("\n"),
+            caption: "Task lifecycle state machine and tenant boundary constraints.",
+          },
+        ],
+      },
+      {
+        heading: "2. The Complete Prisma Schema Definition",
+        body: [
+          "Translating the ERD into our pinned Prisma ORM schema with compound indexes and relations.",
+        ],
+        code: [
+          {
+            file: "prisma/schema.prisma",
+            lang: "prisma",
+            code: [
+              "enum TaskStatus {",
+              "  TODO",
+              "  IN_PROGRESS",
+              "  IN_REVIEW",
+              "  DONE",
+              "  ARCHIVED",
+              "}",
+              "",
+              "enum TaskPriority {",
+              "  LOW",
+              "  MEDIUM",
+              "  HIGH",
+              "  URGENT",
+              "}",
+              "",
+              "model Task {",
+              "  id          String       @id @default(uuid())",
+              "  workspaceId String",
+              "  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)",
+              "",
+              "  title       String",
+              "  description String?      @db.Text",
+              "  status      TaskStatus   @default(TODO)",
+              "  priority    TaskPriority @default(MEDIUM)",
+              "",
+              "  assigneeId  String?",
+              "  assignee    User?        @relation(\"AssignedTasks\", fields: [assigneeId], references: [id], onDelete: SetNull)",
+              "",
+              "  createdById String",
+              "  creator     User         @relation(\"CreatedTasks\", fields: [createdById], references: [id], onDelete: Restrict)",
+              "",
+              "  dueDate     DateTime?",
+              "  deletedAt   DateTime?",
+              "  version     Int          @default(1) // For optimistic concurrency control",
+              "",
+              "  createdAt   DateTime     @default(now())",
+              "  updatedAt   DateTime     @updatedAt",
+              "",
+              "  @@index([workspaceId, status, createdAt])",
+              "  @@index([assigneeId, status])",
+              "  @@index([deletedAt])",
+              "  @@map(\"tasks\")",
+              "}",
+            ].join("\n"),
+            caption: "Prisma schema model for Tasks with compound performance indexes and audit fields.",
+          },
+        ],
+      },
+    ],
+    commonMistake: {
+      wrong: "Indexing single columns individually (e.g. @@index([workspaceId]), @@index([status])) for queries that always filter on both together.",
+      right: "Creating compound index `@@index([workspaceId, status, createdAt])` that satisfies the multi-tenant query pattern in a single B-tree lookup.",
+      explanation:
+        "PostgreSQL can execute compound multi-column indexes much faster than performing index bitmap merging on multiple individual indexes.",
+    },
+    tryItYourself: {
+      title: "Generate and Inspect the Prisma Migration",
+      instructions: [
+        "1. Add the Task model to your `prisma/schema.prisma` file.",
+        "2. Run `npx prisma migrate dev --name create_tasks_table`.",
+        "3. Inspect the generated SQL file in `prisma/migrations/` to verify foreign keys and indexes.",
+      ],
+      expected: "The migration creates the `tasks` table with foreign key constraints and compound indexes.",
+    },
+    challenge: {
+      title: "Add Tag Many-to-Many Association",
+      description:
+        "Extend the Prisma schema to support arbitrary tags per task (e.g. 'Frontend', 'Security') using an explicit join model `TaskTag` with compound primary key `@@id([taskId, tagId])`.",
+      hints: [
+        "Create `Tag` and `TaskTag` models with explicit relations.",
+      ],
+      solution: `model TaskTag {\n  taskId String\n  tagId  String\n  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)\n  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)\n  @@id([taskId, tagId])\n  @@map("task_tags")\n}`,
+    },
+    quiz: [
+      {
+        question: "Why is `workspaceId` placed first in the compound index `@@index([workspaceId, status, createdAt])`?",
+        options: [
+          "It is the primary tenant filter; placing it first allows Postgres to immediately narrow down the search space to that tenant",
+          "Alphabetical sorting requires it",
+          "Prisma forbids any other column order",
+          "It enables foreign key encryption",
+        ],
+        answer: 0,
+        explanation: "In composite B-Tree indexes, the leading column must match the most selective filter (the tenant workspaceId).",
+      },
+      {
+        question: "What is the purpose of the `version Int @default(1)` column?",
+        options: [
+          "It tracks the software release version",
+          "It enables Optimistic Concurrency Control to prevent two users from overwriting each other's simultaneous edits",
+          "It stores the user's age",
+          "It tracks how many times the server restarted",
+        ],
+        answer: 1,
+        explanation: "Optimistic concurrency uses the version counter to detect and reject conflicting mid-flight updates.",
+      },
+    ],
+    flashcards: [
+      {
+        front: "What is a Compound Index?",
+        back: "A single database index covering two or more columns in a specific order for multi-column query filtering.",
+      },
+      {
+        front: "What is Soft Delete?",
+        back: "Marking a record with a timestamp in `deletedAt` rather than physically executing a SQL DELETE, preserving audit history.",
+      },
+    ],
+    recap: [
+      "Define strict state machine transitions before coding.",
+      "Model multi-tenant relationships with foreign keys and cascade rules.",
+      "Add compound indexes matching your application's real query patterns.",
+    ],
+    references: [
+      { label: "Prisma Schema Reference", url: "https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference" },
+    ],
+    nextBridge: "Now let's build the NestJS controller, service, and Fastify route handlers for the Task module.",
+  },
+
+  {
+    id: "p21-l2",
+    phaseId: "p21",
+    title: "NestJS Service, Controller & Fastify Route Handlers",
+    level: "Full-Stack Developer",
+    minutes: 45,
+    summary:
+      "Construct the complete NestJS backend vertical slice for Tasks. Implement multi-tenant scoped Prisma queries, enforce RBAC permissions, configure Fastify route handlers, and format uniform HTTP responses.",
+    prerequisites: [
+      "p21-l1 — Specifying the Task Module: From Requirements to ERD",
+      "p11-l1 — Controllers, Route Params & Fastify Request/Reply",
+      "p11-l2 — Services, Providers & Dependency Injection",
+    ],
+    objectives: [
+      "Implement `TasksController` exposing standard RESTful CRUD endpoints.",
+      "Implement `TasksService` executing strictly tenant-scoped Prisma operations.",
+      "Extract authenticated user and workspace context via custom `@CurrentUser()` and `@CurrentWorkspace()` decorators.",
+      "Handle HTTP 404 Not Found and 403 Forbidden exceptions with clear domain errors.",
+    ],
+    simple:
+      "The NestJS Tasks module connects the outside web to your database. The controller defines the HTTP endpoints (GET, POST, PATCH, DELETE), while the service contains the actual business logic. Crucially, every database query must explicitly filter by `workspaceId` to guarantee that a user in Workspace A cannot read or modify tasks belonging to Workspace B.",
+    why:
+      "Missing tenant scoping in backend services creates Insecure Direct Object Reference (IDOR) vulnerabilities where users can modify other companies' data by guessing task IDs.",
+    mentalModel: {
+      title: "The Bank Vault Teller & The Safe Deposit Key",
+      body: "The controller is the bank teller window: it checks your ID badge (`@UseGuards(AuthGuard)`). The service is the vault manager: even if you ask for Safe Deposit Box #402, the manager will only open Box #402 if your workspace key matches the box's registered workspace lock (`where: { id, workspaceId }`).",
+    },
+    sections: [
+      {
+        heading: "1. The TasksService: Strictly Scoped Data Access",
+        body: [
+          "Every Prisma query includes both the record `id` and the tenant `workspaceId`.",
+        ],
+        code: [
+          {
+            file: "src/tasks/tasks.service.ts",
+            lang: "ts",
+            code: [
+              "import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';",
+              "import { PrismaService } from '../prisma/prisma.service';",
+              "import { CreateTaskDto, UpdateTaskDto, TaskQueryDto } from './dto';",
+              "",
+              "@Injectable()",
+              "export class TasksService {",
+              "  constructor(private readonly prisma: PrismaService) {}",
+              "",
+              "  async list(workspaceId: string, query: TaskQueryDto) {",
+              "    const { status, priority, search, page = 1, limit = 20 } = query;",
+              "    const skip = (page - 1) * limit;",
+              "",
+              "    const where = {",
+              "      workspaceId,",
+              "      deletedAt: null, // Filter out soft-deleted records",
+              "      ...(status ? { status } : {}),",
+              "      ...(priority ? { priority } : {}),",
+              "      ...(search ? { title: { contains: search, mode: 'insensitive' as const } } : {}),",
+              "    };",
+              "",
+              "    const [data, total] = await Promise.all([",
+              "      this.prisma.task.findMany({",
+              "        where,",
+              "        skip,",
+              "        take: limit,",
+              "        orderBy: { createdAt: 'desc' },",
+              "        include: { assignee: { select: { id: true, name: true, avatarUrl: true } } },",
+              "      }),",
+              "      this.prisma.task.count({ where }),",
+              "    ]);",
+              "",
+              "    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };",
+              "  }",
+              "",
+              "  async getById(workspaceId: string, id: string) {",
+              "    const task = await this.prisma.task.findFirst({",
+              "      where: { id, workspaceId, deletedAt: null },",
+              "      include: { assignee: true, creator: true },",
+              "    });",
+              "    if (!task) throw new NotFoundException(`Task #${id} not found in this workspace`);",
+              "    return task;",
+              "  }",
+              "",
+              "  async create(workspaceId: string, userId: string, dto: CreateTaskDto) {",
+              "    return this.prisma.task.create({",
+              "      data: {",
+              "        ...dto,",
+              "        workspaceId,",
+              "        createdById: userId,",
+              "      },",
+              "    });",
+              "  }",
+              "}",
+            ].join("\n"),
+            caption: "TasksService with tenant isolation and soft-delete filtering on all queries.",
+          },
+        ],
+      },
+      {
+        heading: "2. The TasksController: Clean RESTful Endpoints",
+        body: [
+          "Exposing endpoints decorated with authentication and workspace guards.",
+        ],
+        code: [
+          {
+            file: "src/tasks/tasks.controller.ts",
+            lang: "ts",
+            code: [
+              "import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';",
+              "import { TasksService } from './tasks.service';",
+              "import { CreateTaskDto, UpdateTaskDto, TaskQueryDto } from './dto';",
+              "import { AuthGuard } from '../auth/guards/auth.guard';",
+              "import { WorkspaceGuard } from '../workspaces/guards/workspace.guard';",
+              "import { CurrentUser, CurrentWorkspace } from '../auth/decorators';",
+              "",
+              "@Controller('workspaces/:workspaceId/tasks')",
+              "@UseGuards(AuthGuard, WorkspaceGuard)",
+              "export class TasksController {",
+              "  constructor(private readonly tasksService: TasksService) {}",
+              "",
+              "  @Get()",
+              "  list(@CurrentWorkspace('id') workspaceId: string, @Query() query: TaskQueryDto) {",
+              "    return this.tasksService.list(workspaceId, query);",
+              "  }",
+              "",
+              "  @Get(':id')",
+              "  getById(@CurrentWorkspace('id') workspaceId: string, @Param('id') id: string) {",
+              "    return this.tasksService.getById(workspaceId, id);",
+              "  }",
+              "",
+              "  @Post()",
+              "  create(",
+              "    @CurrentWorkspace('id') workspaceId: string,",
+              "    @CurrentUser('id') userId: string,",
+              "    @Body() dto: CreateTaskDto,",
+              "  ) {",
+              "    return this.tasksService.create(workspaceId, userId, dto);",
+              "  }",
+              "}",
+            ].join("\n"),
+            caption: "TasksController binding routes to verified workspace and user identity decorators.",
+          },
+        ],
+      },
+    ],
+    commonMistake: {
+      wrong: "Calling `this.prisma.task.findUnique({ where: { id } })` without checking `workspaceId`, allowing any user with a valid task ID to read data across tenant boundaries.",
+      right: "Always using `findFirst({ where: { id, workspaceId, deletedAt: null } })` to enforce tenant ownership.",
+      explanation:
+        "Unscoped `findUnique({ where: { id } })` queries bypass tenant boundaries and cause IDOR vulnerabilities.",
+    },
+    tryItYourself: {
+      title: "Verify Tenant Scoping with Test Accounts",
+      instructions: [
+        "1. Create a task in Workspace A.",
+        "2. Copy the task ID and send a `GET /workspaces/workspace_B/tasks/:id` request using a token from Workspace B.",
+        "3. Verify that the server returns HTTP 404 Not Found rather than leaking Workspace A's task.",
+      ],
+      expected: "Cross-tenant access attempts are rejected with 404.",
+    },
+    challenge: {
+      title: "Add Soft Delete Endpoint in TasksService",
+      description:
+        "Implement `async softDelete(workspaceId: string, id: string)` that updates `deletedAt: new Date()` instead of running a physical DELETE.",
+      hints: [
+        "Use `this.prisma.task.updateMany({ where: { id, workspaceId, deletedAt: null }, data: { deletedAt: new Date() } })`.",
+      ],
+      solution: `async softDelete(workspaceId: string, id: string) {\n  const res = await this.prisma.task.updateMany({\n    where: { id, workspaceId, deletedAt: null },\n    data: { deletedAt: new Date() },\n  });\n  if (res.count === 0) throw new NotFoundException('Task not found');\n  return { success: true };\n}`,
+    },
+    quiz: [
+      {
+        question: "Why should multi-tenant queries use `findFirst({ where: { id, workspaceId } })` instead of `findUnique({ where: { id } })`?",
+        options: [
+          "findUnique cannot query PostgreSQL",
+          "findFirst allows filtering by both id and workspaceId simultaneously, preventing IDOR leaks",
+          "findFirst disables SSL",
+          "findUnique is deprecated in Prisma 7",
+        ],
+        answer: 1,
+        explanation: "findFirst allows compound filtering on both id and tenant workspaceId.",
+      },
+      {
+        question: "What HTTP status code should be returned when a task ID does not exist in the requester's workspace?",
+        options: ["200 OK with empty body", "404 Not Found", "500 Internal Server Error", "301 Moved Permanently"],
+        answer: 1,
+        explanation: "Returning 404 Not Found cleanly hides the existence of resources belonging to other tenants.",
+      },
+    ],
+    flashcards: [
+      {
+        front: "What is an IDOR vulnerability?",
+        back: "Insecure Direct Object Reference: when an app accesses database records using user-supplied IDs without verifying ownership.",
+      },
+      {
+        front: "Why use `deletedAt: null` in default queries?",
+        back: "To filter out soft-deleted records so they appear deleted to users while preserving database audit history.",
+      },
+    ],
+    recap: [
+      "Enforce tenant workspace scoping on every query.",
+      "Use `findFirst` with `{ id, workspaceId, deletedAt: null }`.",
+      "Handle 404 and 403 exceptions cleanly in services.",
+    ],
+    references: [
+      { label: "NestJS Controllers", url: "https://docs.nestjs.com/controllers" },
+      { label: "NestJS Providers", url: "https://docs.nestjs.com/providers" },
+    ],
+    nextBridge: "Now let's implement Prisma interactive transactions, optimistic concurrency control, and soft deletes.",
+  },
+
+  {
+    id: "p21-l3",
+    phaseId: "p21",
+    title: "Prisma Transactions, Optimistic Concurrency & Soft Deletes",
+    level: "Full-Stack Developer",
+    minutes: 45,
+    summary:
+      "Master atomic multi-record updates in Prisma ORM 7.9.15. Implement `$transaction` interactive closures, prevent lost update anomalies using optimistic concurrency version counters, and build robust soft-delete audit workflows.",
+    prerequisites: [
+      "p21-l2 — NestJS Service, Controller & Fastify Route Handlers",
+      "p16-l1 — Advanced Prisma: Interactive Transactions & Concurrency",
+    ],
+    objectives: [
+      "Wrap multi-table mutations (e.g. creating a task and recording an audit log entry) inside `prisma.$transaction()`.",
+      "Prevent 'Lost Update' race conditions using optimistic version matching (`where: { id, version }`).",
+      "Implement idempotent soft-deletion and restoration patterns.",
+      "Handle `PrismaClientKnownRequestError` concurrency conflicts with HTTP 409 Conflict.",
+    ],
+    simple:
+      "Imagine two project managers open the same task at the same time. Manager A edits the description, while Manager B changes the status. If Manager B saves second, Manager B's save will overwrite Manager A's edits without anyone noticing! With Optimistic Concurrency Control, each save increments a `version` number. If Manager B tries to save with an outdated version number, the database detects the conflict and rejects the save with HTTP 409, prompting Manager B to review Manager A's changes first.",
+    why:
+      "In collaborative multi-user apps, simultaneous edits overwrite data silently. Optimistic concurrency guarantees data integrity under concurrent usage.",
+    mentalModel: {
+      title: "The Ticket Counter Stamp & The Numbered Token",
+      body: "When you receive your ticket (version 1), you write down your edits. When you hand it back to the teller, the teller checks if the board is still at version 1. If someone else already updated it to version 2 while you were writing, the teller stamps 'CONFLICT' on your ticket, returns it, and gives you the new version 2 copy to merge your changes.",
+    },
+    sections: [
+      {
+        heading: "1. Optimistic Concurrency Control with Prisma",
+        body: [
+          "Updating a task with explicit version checking to prevent lost updates.",
+        ],
+        code: [
+          {
+            file: "src/tasks/tasks.service.ts",
+            lang: "ts",
+            code: [
+              "import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';",
+              "import { PrismaService } from '../prisma/prisma.service';",
+              "import { UpdateTaskDto } from './dto';",
+              "",
+              "@Injectable()",
+              "export class TasksService {",
+              "  constructor(private readonly prisma: PrismaService) {}",
+              "",
+              "  async updateWithConcurrencyControl(",
+              "    workspaceId: string,",
+              "    taskId: string,",
+              "    userId: string,",
+              "    dto: UpdateTaskDto,",
+              "    expectedVersion: number,",
+              "  ) {",
+              "    return this.prisma.$transaction(async (tx) => {",
+              "      // 1. Attempt update matching EXACT id, workspaceId, and expected version",
+              "      const updated = await tx.task.updateMany({",
+              "        where: {",
+              "          id: taskId,",
+              "          workspaceId,",
+              "          version: expectedVersion, // MUST match expected version",
+              "          deletedAt: null,",
+              "        },",
+              "        data: {",
+              "          ...dto,",
+              "          version: { increment: 1 }, // Atomically bump version counter",
+              "        },",
+              "      });",
+              "",
+              "      // 2. If count is 0, either task does not exist OR version was modified concurrently",
+              "      if (updated.count === 0) {",
+              "        const existing = await tx.task.findFirst({ where: { id: taskId, workspaceId } });",
+              "        if (!existing) throw new NotFoundException('Task not found');",
+              "        throw new ConflictException(",
+              "          `This task was modified by another user (Current version: ${existing.version}, your version: ${expectedVersion}). Please refresh and try again.`,",
+              "        );",
+              "      }",
+              "",
+              "      // 3. Record Audit Log inside the same atomic transaction",
+              "      await tx.auditLog.create({",
+              "        data: {",
+              "          workspaceId,",
+              "          userId,",
+              "          action: 'TASK_UPDATED',",
+              "          entityId: taskId,",
+              "          metadata: { changes: dto, previousVersion: expectedVersion },",
+              "        },",
+              "      });",
+              "",
+              "      return tx.task.findUniqueOrThrow({ where: { id: taskId } });",
+              "    });",
+              "  }",
+              "}",
+            ].join("\n"),
+            caption: "Atomic interactive transaction enforcing optimistic concurrency and audit logging.",
+          },
+        ],
+      },
+    ],
+    commonMistake: {
+      wrong: "Fetching a record, checking version in JavaScript memory, and then running update in a separate non-transactional query, leaving a race condition window.",
+      right: "Including the version check directly in the SQL UPDATE query: `where: { id, version: expectedVersion }`.",
+      explanation:
+        "Database-level atomic checks guarantee that no other transaction can slip between the check and the update.",
+    },
+    tryItYourself: {
+      title: "Simulate a Concurrent Conflict in DevTools",
+      instructions: [
+        "1. Open the same task in two different browser tabs (Tab A and Tab B).",
+        "2. In Tab A, update the title and click save (version bumps from 1 to 2).",
+        "3. Without refreshing Tab B, edit the description and click save in Tab B.",
+        "4. Verify that Tab B receives HTTP 409 Conflict with a clear resolution prompt.",
+      ],
+      expected: "Tab B is prevented from overwriting Tab A's edits.",
+    },
+    challenge: {
+      title: "Write an Auto-Rebasing Concurrency Resolver",
+      description:
+        "On the frontend, when catching an HTTP 409 Conflict error, fetch the latest server version, identify non-conflicting field differences, and offer the user a 3-way visual merge dialog.",
+      hints: [
+        "Compare `serverTask` values against `originalSnapshot` and `userDirtyValues`.",
+      ],
+      solution: `const diffs = Object.keys(userDirtyValues).map(key => ({\n  field: key,\n  yourValue: userDirtyValues[key],\n  serverValue: serverTask[key],\n  conflict: serverTask[key] !== originalSnapshot[key]\n}));`,
+    },
+    quiz: [
+      {
+        question: "What is the Lost Update problem in database systems?",
+        options: [
+          "When a hard drive fails and loses files",
+          "When two concurrent users read the same record and write back conflicting changes, causing the second write to overwrite the first write silently",
+          "When an SQL index is deleted",
+          "When a user forgets their password",
+        ],
+        answer: 1,
+        explanation: "Lost updates happen when concurrent writes overwrite intermediate updates without concurrency control.",
+      },
+      {
+        question: "What HTTP status code is universally used to report an optimistic concurrency version conflict?",
+        options: ["400 Bad Request", "401 Unauthorized", "409 Conflict", "502 Bad Gateway"],
+        answer: 2,
+        explanation: "HTTP 409 Conflict signifies that the request could not be completed due to a conflict with the current state of the target resource.",
+      },
+    ],
+    flashcards: [
+      {
+        front: "What is Optimistic Concurrency Control (OCC)?",
+        back: "A strategy where transactions check for data conflicts before committing using version numbers, without holding long database locks.",
+      },
+      {
+        front: "What is `prisma.$transaction(async (tx) => { ... })`?",
+        back: "An interactive transaction where all database operations share an isolated atomic connection and rollback together on failure.",
+      },
+    ],
+    recap: [
+      "Use `prisma.$transaction` for multi-record atomic operations.",
+      "Check `version` directly in the database UPDATE statement.",
+      "Throw HTTP 409 Conflict on concurrency collisions.",
+    ],
+    references: [
+      { label: "Prisma Interactive Transactions", url: "https://www.prisma.io/docs/concepts/components/prisma-client/transactions#interactive-transactions" },
+    ],
+    nextBridge: "Now let's build the React Query hooks for our Tasks CRUD vertical slice.",
+  },
+];
+
+export const LESSON_CONTENT_P21: Record<string, LessonContent> = Object.fromEntries(
+  LESSONS_P21.map((l) => [l.id, l])
+);

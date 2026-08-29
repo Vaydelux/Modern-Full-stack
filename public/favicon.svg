@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3ddc97" />
+      <stop offset="100%" stop-color="#2ca872" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141e18" />
+      <stop offset="100%" stop-color="#0b100e" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" stroke="#26382e" stroke-width="12" />
+  <!-- Terminal / Code Chevron & Cursor -->
+  <path d="M140 160 L240 256 L140 352" fill="none" stroke="url(#brandGrad)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" />
+  <line x1="260" y1="352" x2="370" y2="352" stroke="#5ac8e8" stroke-width="36" stroke-linecap="round" />
+  <circle cx="360" cy="170" r="22" fill="#f5b759" />
+</svg>

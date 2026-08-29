@@ -1,0 +1,6 @@
+{
+  "name": "Zero to Mastery — Modern Full-Stack Web Development",
+  "description": "A living, project-first curriculum: React + Next.js + NestJS + Fastify + Prisma + Supabase PostgreSQL, from web fundamentals to production mastery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

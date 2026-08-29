@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A living, project-first curriculum: React + Next.js + NestJS + Fastify + Prisma + Supabase PostgreSQL, from web fundamentals to production mastery."
+    />
+    <meta name="keywords" content="full-stack web development, react, next.js, nestjs, fastify, prisma, postgresql, supabase, typescript, web architecture, zero to mastery, curriculum, software engineering" />
+    <meta name="author" content="Zero to Mastery" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://zerotomastery.io/courses/full-stack-web-development" />
+    <meta name="theme-color" content="#0b100e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Zero→Mastery" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Zero to Mastery — Modern Full-Stack Web Development" />
+    <meta
+      property="og:description"
+      content="A living, project-first curriculum: React + Next.js + NestJS + Fastify + Prisma + Supabase PostgreSQL, from web fundamentals to production mastery."
+    />
+    <meta property="og:image" content="/og-image.svg" />
+    <meta property="og:image:type" content="image/svg+xml" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Zero to Mastery" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Zero to Mastery — Modern Full-Stack Web Development" />
+    <meta
+      name="twitter:description"
+      content="A living, project-first curriculum: React + Next.js + NestJS + Fastify + Prisma + Supabase PostgreSQL, from web fundamentals to production mastery."
+    />
+    <meta name="twitter:image" content="/og-image.svg" />
+
+    <!-- Favicons & App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Zero to Mastery — Modern Full-Stack Web Development</title>
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://zerotomastery.io/#website",
+            "url": "https://zerotomastery.io/",
+            "name": "Zero to Mastery",
+            "description": "Modern Full-Stack Web Development curriculum and architectural reference platform."
+          },
+          {
+            "@type": "Course",
+            "@id": "https://zerotomastery.io/courses/full-stack-web-development#course",
+            "name": "Zero to Mastery — Modern Full-Stack Web Development",
+            "description": "A living, project-first curriculum: React + Next.js + NestJS + Fastify + Prisma + Supabase PostgreSQL, from web fundamentals to production mastery.",
+            "provider": {
+              "@type": "Organization",
+              "name": "Zero to Mastery",
+              "sameAs": "https://zerotomastery.io"
+            },
+            "educationalLevel": "Beginner to Advanced",
+            "timeRequired": "PT80H",
+            "inLanguage": "en",
+            "isAccessibleForFree": true,
+            "teaches": [
+              "TypeScript & Modern JavaScript",
+              "React 18/19 Architecture & State Management",
+              "Next.js App Router & Server Components",
+              "NestJS Enterprise Backend Engineering",
+              "Fastify High-Performance Microservices",
+              "Prisma ORM & Supabase PostgreSQL",
+              "Distributed Caching, Redis, & Message Queues",
+              "Production DevOps, CI/CD, & Observability"
+            ],
+            "hasCourseInstance": {
+              "@type": "CourseInstance",
+              "courseMode": "Online",
+              "courseWorkload": "PT80H"
+            }
+          }
+        ]
+      }
+    </script>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("z2m:theme");
+          var theme = stored === "light" || stored === "dark" ? stored : "dark";
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

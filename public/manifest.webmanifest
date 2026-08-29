@@ -1,0 +1,68 @@
+{
+  "name": "Zero to Mastery — Modern Full-Stack Web Development",
+  "short_name": "Zero→Mastery",
+  "description": "A living, project-first curriculum: React + Next.js + NestJS + Fastify + Prisma + Supabase PostgreSQL, from web fundamentals to production mastery.",
+  "start_url": "/#/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0b100e",
+  "background_color": "#0b100e",
+  "categories": ["education", "developer tools", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Roadmap",
+      "short_name": "Roadmap",
+      "description": "Jump to the mastery ladder and phase map",
+      "url": "/#/roadmap",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Search Course",
+      "short_name": "Search",
+      "description": "Search lessons, code examples, and concepts",
+      "url": "/#/?search=1",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Glossary & Flashcards",
+      "short_name": "Glossary",
+      "description": "Term definitions and mental model glossary",
+      "url": "/#/glossary",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Completion Ledger",
+      "short_name": "Ledger",
+      "description": "Track your progress and completed lessons",
+      "url": "/#/dashboard",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}
