@@ -176,12 +176,12 @@ export function PersistentLessonNav({ currentId }: PersistentLessonNavProps) {
               {isCurrentComplete ? (
                 <>
                   <CheckCircle2 size={13} className="text-[var(--brand)]" />
-                  <span>Mastered</span>
+                  <span>Read · Finished</span>
                 </>
               ) : (
                 <>
                   <Circle size={13} style={{ color: "var(--muted)" }} />
-                  <span>Mark Complete</span>
+                  <span>Mark as Read</span>
                 </>
               )}
             </button>

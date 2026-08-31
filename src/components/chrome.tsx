@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
   Circle,
   CircleDashed,
   Download,
+  Keyboard,
   Menu,
   Moon,
   RotateCw,
@@ -74,7 +76,17 @@ export function UpdateToast() {
   );
 }
 
-export function TopBar({ route, onMenu, onSearch }: { route: string; onMenu: () => void; onSearch: () => void }) {
+export function TopBar({
+  route,
+  onMenu,
+  onSearch,
+  onOpenShortcuts,
+}: {
+  route: string;
+  onMenu: () => void;
+  onSearch: () => void;
+  onOpenShortcuts?: () => void;
+}) {
   const isMac = typeof navigator !== "undefined" && /mac|iphone|ipad/i.test(navigator.userAgent);
   const { theme, toggleTheme } = useTheme();
   const { completed } = useProgress();
@@ -169,6 +181,20 @@ export function TopBar({ route, onMenu, onSearch }: { route: string; onMenu: () 
             <span className="hidden lg:inline">Search</span>
             <kbd className="hidden lg:inline">{isMac ? "⌘K" : "Ctrl K"}</kbd>
           </button>
+
+          {onOpenShortcuts && (
+            <button
+              type="button"
+              className="btn btn-soft btn-sm px-2.5"
+              onClick={onOpenShortcuts}
+              aria-label="Keyboard Shortcuts"
+              title="Keyboard Shortcuts (?)"
+            >
+              <Keyboard size={14} />
+              <kbd className="hidden xl:inline text-[0.7rem] font-mono">?</kbd>
+            </button>
+          )}
+
           <span
             className="chip hidden sm:inline-flex"
             title="Modules you have mastered in the curriculum"
@@ -181,7 +207,7 @@ export function TopBar({ route, onMenu, onSearch }: { route: string; onMenu: () 
             className="btn btn-soft btn-sm"
             onClick={toggleTheme}
             aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            title="Toggle theme"
+            title="Toggle theme (T)"
           >
             {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           </button>
@@ -204,10 +230,24 @@ const REF_LINKS = [
   { to: "status", label: "Course Status" },
 ];
 
-function LessonIcon({ status }: { status: string }) {
-  if (status === "implemented") return <CheckCircle2 size={14} style={{ color: "var(--brand)", flexShrink: 0 }} />;
+function LessonIcon({ status, isDone }: { status: string; isDone?: boolean }) {
+  if (isDone) {
+    return (
+      <span
+        className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0"
+        style={{
+          background: "var(--brand)",
+          color: "#09090b",
+        }}
+        title="Finished · Marked as Read"
+      >
+        <Check size={9} strokeWidth={3.5} />
+      </span>
+    );
+  }
+  if (status === "implemented") return <Circle size={14} style={{ color: "var(--brand)", opacity: 0.6, flexShrink: 0 }} />;
   if (status === "draft") return <CircleDashed size={14} style={{ color: "var(--amber)", flexShrink: 0 }} />;
-  return <Circle size={14} style={{ color: "var(--muted)", flexShrink: 0 }} />;
+  return <Circle size={14} style={{ color: "var(--muted)", opacity: 0.45, flexShrink: 0 }} />;
 }
 
 export function SidebarBody({ route, onNavigate }: { route: string; onNavigate?: () => void }) {
@@ -398,20 +438,50 @@ export function SidebarBody({ route, onNavigate }: { route: string; onNavigate?:
                   </button>
                   {isOpen && (
                     <div className="ml-3 pl-2.5 border-l fade-in flex flex-col gap-0.5 mt-0.5" style={{ borderColor: "var(--line)" }}>
-                      {phase.lessons.map((l) => (
-                        <Link
-                          key={l.id}
-                          to={`lesson/${l.id}`}
-                          className={`side-link ${name === "lesson" && param === l.id ? "active" : ""}`}
-                          onClick={onNavigate}
-                          title={l.title}
-                        >
-                          <span className="shrink-0 mt-0.5">
-                            <LessonIcon status={l.status} />
-                          </span>
-                          <span className="leading-snug line-clamp-2 text-left flex-1 min-w-0">{l.title}</span>
-                        </Link>
-                      ))}
+                      {phase.lessons.map((l) => {
+                        const isLessonDone = isComplete(l.id);
+                        const isCurrentActive = name === "lesson" && param === l.id;
+
+                        return (
+                          <Link
+                            key={l.id}
+                            to={`lesson/${l.id}`}
+                            className={`side-link ${isCurrentActive ? "active" : ""}`}
+                            onClick={onNavigate}
+                            title={`${l.title}${isLessonDone ? " (Finished · Read)" : ""}`}
+                            style={{
+                              opacity: isLessonDone && !isCurrentActive ? 0.9 : 1,
+                            }}
+                          >
+                            <span className="shrink-0 mt-0.5">
+                              <LessonIcon status={l.status} isDone={isLessonDone} />
+                            </span>
+                            <span
+                              className={`leading-snug line-clamp-2 text-left flex-1 min-w-0 ${
+                                isLessonDone && !isCurrentActive
+                                  ? "text-[var(--ink-2)]"
+                                  : ""
+                              }`}
+                            >
+                              {l.title}
+                            </span>
+                            {isLessonDone && (
+                              <span
+                                className="font-mono text-[0.56rem] px-1.5 py-0.2 rounded font-semibold uppercase tracking-wider shrink-0 transition-colors"
+                                style={{
+                                  background: "var(--brand-soft)",
+                                  color: "var(--brand-ink)",
+                                  borderColor: "color-mix(in srgb, var(--brand) 30%, transparent)",
+                                  borderWidth: "1px",
+                                }}
+                                title="Finished & Marked as Read"
+                              >
+                                Read
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

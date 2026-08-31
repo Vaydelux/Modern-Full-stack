@@ -84,6 +84,21 @@ export function fireStarBurst() {
   });
 }
 
+/**
+ * Fires subtle celebratory burst upon completing/reading a lesson
+ */
+export function fireMiniConfetti() {
+  confetti({
+    particleCount: 35,
+    spread: 60,
+    origin: { y: 0.75, x: 0.8 },
+    colors: ["#10b981", "#6366f1", "#3b82f6", "#f59e0b"],
+    zIndex: 99999,
+    ticks: 45,
+    scalar: 0.8,
+  });
+}
+
 export function CelebrationOverlay() {
   const { completed, isComplete } = useProgress();
   const [isOpen, setIsOpen] = useState(false);

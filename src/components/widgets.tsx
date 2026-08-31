@@ -423,9 +423,9 @@ export function Checkpoint({ lessonId }: { lessonId: string }) {
   const { isComplete, toggleComplete } = useProgress();
   const done = isComplete(lessonId);
   return (
-    <div className="panel p-5 flex flex-wrap items-center gap-4" style={{ borderColor: done ? "var(--brand)" : "var(--line)" }}>
+    <div className="panel p-5 flex flex-wrap items-center gap-4 transition-colors" style={{ borderColor: done ? "var(--brand)" : "var(--line)" }}>
       <span
-        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ring-pop"
+        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ring-pop transition-all"
         style={{
           background: done ? "var(--brand)" : "var(--surface-3)",
           color: done ? "var(--brand-contrast)" : "var(--muted)",
@@ -434,13 +434,32 @@ export function Checkpoint({ lessonId }: { lessonId: string }) {
         <CheckCircle2 size={20} />
       </span>
       <div className="flex-1 min-w-[200px]">
-        <div className="font-display font-semibold">Checkpoint</div>
-        <div className="text-sm" style={{ color: "var(--muted)" }}>
-          {done ? "Lesson marked complete — progress is saved on this device." : "Finished the quiz and flashcards? Seal it."}
+        <div className="font-display font-semibold flex items-center gap-2">
+          <span>Lesson Completion</span>
+          {done && (
+            <span
+              className="font-mono text-[0.62rem] px-2 py-0.5 rounded font-semibold uppercase tracking-wider"
+              style={{
+                background: "var(--brand-soft)",
+                color: "var(--brand-ink)",
+                borderColor: "var(--brand)",
+                borderWidth: "1px",
+              }}
+            >
+              Finished · Saved
+            </span>
+          )}
+        </div>
+        <div className="text-sm mt-0.5" style={{ color: "var(--muted)" }}>
+          {done ? "Lesson marked as finished — completion is saved in local storage and highlighted in the sidebar." : "Finished reading? Mark this lesson as read to update your progress."}
         </div>
       </div>
-      <button type="button" className={`btn ${done ? "btn-ghost" : "btn-primary"}`} onClick={() => toggleComplete(lessonId)}>
-        {done ? "Undo completion" : "Mark lesson complete"}
+      <button
+        type="button"
+        className={`btn ${done ? "btn-soft border-[var(--brand)] text-[var(--brand-ink)]" : "btn-primary"} cursor-pointer`}
+        onClick={() => toggleComplete(lessonId)}
+      >
+        {done ? "✓ Finished (Mark as Unread)" : "Mark as Read"}
       </button>
     </div>
   );

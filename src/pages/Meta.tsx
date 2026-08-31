@@ -11,15 +11,38 @@ import { useProgress } from "../lib/store";
 /* ---------------- Design Tokens ---------------- */
 
 const COLOR_TOKENS = [
-  { name: "--brand", role: "Primary action, success, progress" },
-  { name: "--amber", role: "Draft status, warnings, caution" },
-  { name: "--sky", role: "Info, pinned versions, links" },
-  { name: "--rose", role: "Danger, errors, security callouts" },
-  { name: "--bg / --bg-2", role: "Page background layers" },
+  { name: "--brand", role: "Primary action, success, progress (Emerald Mint)" },
+  { name: "--amber", role: "Draft status, warnings, caution, pending state" },
+  { name: "--sky", role: "Info, pinned versions, protocol links" },
+  { name: "--rose", role: "Danger, errors, security callouts, breaking changes" },
+  { name: "--violet", role: "Deep architecture, state machines, advanced mastery" },
+  { name: "--teal", role: "Databases, caching, microservices, persistent storage" },
+  { name: "--bg / --bg-2", role: "Page background base layers" },
   { name: "--surface / --surface-2 / --surface-3", role: "Cards, panels, raised fields" },
-  { name: "--ink / --ink-2 / --muted", role: "Text hierarchy" },
-  { name: "--line / --line-2", role: "Borders and separators" },
-  { name: "--code-bg / --code-ink", role: "Code surfaces (always dark)" },
+  { name: "--surface-hover", role: "Subtle interactive elevated hover states" },
+  { name: "--ink / --ink-2 / --muted / --muted-2", role: "4-level typographic contrast hierarchy" },
+  { name: "--line / --line-2 / --line-focus", role: "Borders, structural dividers, and focus rings" },
+  { name: "--code-bg / --code-ink", role: "Code surfaces and syntax highlights" },
+];
+
+const RADIUS_TOKENS = [
+  { name: "--r-xs", value: "4px", role: "Inline tags, micro badges, tooltips" },
+  { name: "--r-sm", value: "6px", role: "Buttons, chips, small inputs" },
+  { name: "--r", value: "10px", role: "Default interactive components, callouts" },
+  { name: "--r-md", value: "12px", role: "Medium cards, dropdown menus" },
+  { name: "--r-lg", value: "16px", role: "Standard panels, dashboard widgets" },
+  { name: "--r-xl", value: "20px", role: "Hero containers, modal dialogs" },
+  { name: "--r-full", value: "9999px", role: "Pill badges, round avatar frames" },
+];
+
+const SPACING_TOKENS = [
+  { name: "--space-1", value: "4px (0.25rem)", role: "Tightest spacing, badge inner gap" },
+  { name: "--space-2", value: "8px (0.5rem)", role: "Icon & text gaps, compact padding" },
+  { name: "--space-3", value: "12px (0.75rem)", role: "Form field internal padding" },
+  { name: "--space-4", value: "16px (1rem)", role: "Standard card inner padding" },
+  { name: "--space-6", value: "24px (1.5rem)", role: "Section gaps, panel interior" },
+  { name: "--space-8", value: "32px (2rem)", role: "Major block separation" },
+  { name: "--space-12", value: "48px (3rem)", role: "Page section rhythm" },
 ];
 
 export function TokensPage() {
@@ -34,19 +57,67 @@ export function TokensPage() {
       </p>
 
       <section className="mt-10">
-        <SectionHeading kicker="Semantic color" title="Palette roles" />
+        <SectionHeading kicker="Semantic color" title="Palette roles & status accents" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {COLOR_TOKENS.map((t) => (
             <div key={t.name} className="panel p-4 flex items-center gap-3">
               <span
-                className="w-10 h-10 rounded-[var(--r-sm)] border shrink-0"
+                className="w-10 h-10 rounded-[var(--r-sm)] border shrink-0 shadow-sm"
                 style={{ background: `var(${t.name.split(" ")[0]})`, borderColor: "var(--line-2)" }}
                 aria-hidden="true"
               />
               <div>
-                <div className="font-mono text-[0.78rem]" style={{ color: "var(--ink)" }}>{t.name}</div>
-                <div className="text-[0.78rem] mt-0.5" style={{ color: "var(--muted)" }}>{t.role}</div>
+                <div className="font-mono text-[0.78rem] font-semibold" style={{ color: "var(--ink)" }}>{t.name}</div>
+                <div className="text-[0.76rem] mt-0.5" style={{ color: "var(--muted)" }}>{t.role}</div>
               </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <SectionHeading kicker="Geometric system" title="Radius & elevation hierarchy" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {RADIUS_TOKENS.map((r) => (
+            <div key={r.name} className="panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-mono text-[0.78rem] font-semibold" style={{ color: "var(--ink)" }}>{r.name} · {r.value}</div>
+                <div className="text-[0.76rem] mt-0.5" style={{ color: "var(--muted)" }}>{r.role}</div>
+              </div>
+              <div
+                className="w-10 h-10 border-2 shrink-0 flex items-center justify-center font-mono text-[0.65rem]"
+                style={{
+                  borderRadius: `var(${r.name})`,
+                  borderColor: "var(--brand)",
+                  background: "var(--brand-soft)",
+                  color: "var(--brand-ink)"
+                }}
+              >
+                {r.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <SectionHeading kicker="Spatial rhythm" title="4px / 8px Spacing scale" />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {SPACING_TOKENS.map((s) => (
+            <div key={s.name} className="panel p-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-mono text-[0.78rem] font-semibold" style={{ color: "var(--ink)" }}>{s.name} · {s.value}</div>
+                <div className="text-[0.76rem] mt-0.5" style={{ color: "var(--muted)" }}>{s.role}</div>
+              </div>
+              <div
+                className="h-6 rounded-[var(--r-xs)]"
+                style={{
+                  width: `var(${s.name})`,
+                  background: "var(--sky)",
+                  minWidth: "4px"
+                }}
+                title={s.value}
+              />
             </div>
           ))}
         </div>
@@ -79,6 +150,8 @@ export function TokensPage() {
               <StatusBadge status="implemented" />
               <StatusBadge status="draft" />
               <StatusBadge status="planned" />
+              <span className="badge badge-architecture"><span className="dot" />Architecture</span>
+              <span className="badge badge-database"><span className="dot" />Database</span>
             </div>
             <div className="mt-5">
               <Meter value={0.62} />
@@ -87,11 +160,11 @@ export function TokensPage() {
           <div className="panel p-6">
             <div className="font-mono text-[0.64rem] uppercase tracking-[0.22em] mb-4" style={{ color: "var(--muted)" }}>Radii, motion, focus</div>
             <ul className="flex flex-col gap-2 text-[0.86rem]" style={{ color: "var(--ink-2)" }}>
-              <li><code>--r-sm 6px</code> · <code>--r 10px</code> · <code>--r-lg 14px</code> — restrained, no blanket rounding</li>
+              <li><code>--r-xs 4px</code> · <code>--r-sm 6px</code> · <code>--r 10px</code> · <code>--r-lg 16px</code> · <code>--r-xl 20px</code></li>
               <li><code>--ease cubic-bezier(0.22, 1, 0.36, 1)</code> — one easing family, three durations</li>
               <li>Focus: 2px brand outline, 2px offset, always visible</li>
               <li><code>prefers-reduced-motion</code> collapses all animation to instant</li>
-              <li>Surfaces lift 2px on hover with a soft green-tinted shadow</li>
+              <li>Surfaces lift 2px on hover with calibrated elevation shadows</li>
             </ul>
           </div>
         </div>
@@ -108,6 +181,8 @@ export function TokensPage() {
               "}",
               ".panel-hover:hover {",
               "  transform: translateY(-2px);",
+              "  background: var(--surface-hover);",
+              "  border-color: var(--line-2);",
               "  box-shadow: var(--shadow-2);",
               "}",
             ].join("\n")}

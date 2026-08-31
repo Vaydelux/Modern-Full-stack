@@ -57,6 +57,18 @@ export const STORAGE_KEY = "z2m:v1:progress";
 export const LEGACY_STORAGE_KEYS = ["z2m:progress", "mastery:progress", "zero2mastery:progress"];
 export const AUTH_KEY = "z2m:v1:auth_user";
 export const THEME_KEY = "z2m:theme";
+export const FEEDBACK_STORAGE_KEY = "z2m:v1:lesson_feedback";
+
+export interface LessonFeedbackRecord {
+  vote: "yes" | "no" | null;
+  yesCount: number;
+  noCount: number;
+  tags?: string[];
+  comment?: string;
+  updatedAt?: string;
+}
+
+export type FeedbackState = Record<string, LessonFeedbackRecord>;
 
 /** Check if localStorage is available and writable */
 export function checkLocalStorageAvailable(): boolean {
@@ -147,6 +159,92 @@ export function writeProgressToLocalStorage(state: ProgressState): boolean {
     console.warn("Failed to write Mastery Progress to localStorage:", err);
     return false;
   }
+}
+
+/** Safely read feedback map from localStorage */
+export function readFeedbackFromStorage(): FeedbackState {
+  if (typeof window === "undefined" || !window.localStorage) return {};
+  try {
+    const raw = window.localStorage.getItem(FEEDBACK_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Safely write feedback map to localStorage and broadcast update */
+export function writeFeedbackToStorage(feedback: FeedbackState): boolean {
+  if (typeof window === "undefined" || !window.localStorage) return false;
+  try {
+    window.localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(feedback));
+    if (typeof window.dispatchEvent === "function") {
+      window.dispatchEvent(new CustomEvent("z2m:feedback:update", { detail: feedback }));
+    }
+    return true;
+  } catch (err) {
+    console.warn("Failed to write feedback to localStorage:", err);
+    return false;
+  }
+}
+
+/** Retrieve feedback for a specific lesson */
+export function getLessonFeedback(lessonId: string): LessonFeedbackRecord {
+  const state = readFeedbackFromStorage();
+  const item = state[lessonId];
+  if (!item) {
+    return { vote: null, yesCount: 0, noCount: 0 };
+  }
+  return {
+    vote: item.vote === "yes" || item.vote === "no" ? item.vote : null,
+    yesCount: typeof item.yesCount === "number" ? Math.max(0, item.yesCount) : 0,
+    noCount: typeof item.noCount === "number" ? Math.max(0, item.noCount) : 0,
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    comment: typeof item.comment === "string" ? item.comment : undefined,
+    updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : undefined,
+  };
+}
+
+/** Record or toggle a vote and feedback details for a lesson */
+export function recordLessonVote(
+  lessonId: string,
+  newVote: "yes" | "no" | null,
+  tags?: string[],
+  comment?: string
+): LessonFeedbackRecord {
+  const state = readFeedbackFromStorage();
+  const current = getLessonFeedback(lessonId);
+  const oldVote = current.vote;
+
+  let yesCount = current.yesCount;
+  let noCount = current.noCount;
+
+  // If vote changed, update respective counts
+  if (oldVote !== newVote) {
+    if (oldVote === "yes") yesCount = Math.max(0, yesCount - 1);
+    if (oldVote === "no") noCount = Math.max(0, noCount - 1);
+
+    if (newVote === "yes") yesCount += 1;
+    if (newVote === "no") noCount += 1;
+  }
+
+  const updated: LessonFeedbackRecord = {
+    vote: newVote,
+    yesCount,
+    noCount,
+    tags: tags !== undefined ? tags : current.tags ?? [],
+    comment: comment !== undefined ? comment : current.comment,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const nextState: FeedbackState = {
+    ...state,
+    [lessonId]: updated,
+  };
+
+  writeFeedbackToStorage(nextState);
+  return updated;
 }
 
 /** Safely read progress state from primary or legacy keys */
@@ -467,8 +565,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined" && window.localStorage) {
       try {
         window.localStorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(FEEDBACK_STORAGE_KEY);
         for (const legacy of LEGACY_STORAGE_KEYS) {
           window.localStorage.removeItem(legacy);
+        }
+        if (typeof window.dispatchEvent === "function") {
+          window.dispatchEvent(new CustomEvent("z2m:feedback:update", { detail: {} }));
         }
       } catch {
         /* ignore */
@@ -634,4 +736,76 @@ export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme must be used inside AppProviders");
   return ctx;
+}
+
+/** Custom hook for managing lesson helpfulness feedback and local interaction counts */
+export function useLessonFeedback(lessonId: string) {
+  const [feedback, setFeedback] = useState<LessonFeedbackRecord>(() => getLessonFeedback(lessonId));
+
+  useEffect(() => {
+    setFeedback(getLessonFeedback(lessonId));
+
+    const handleCustomUpdate = () => {
+      setFeedback(getLessonFeedback(lessonId));
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === FEEDBACK_STORAGE_KEY) {
+        setFeedback(getLessonFeedback(lessonId));
+      }
+    };
+
+    window.addEventListener("z2m:feedback:update", handleCustomUpdate);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener("z2m:feedback:update", handleCustomUpdate);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [lessonId]);
+
+  const vote = useCallback(
+    (newVote: "yes" | "no", tags?: string[], comment?: string) => {
+      const res = recordLessonVote(lessonId, newVote, tags, comment);
+      setFeedback(res);
+    },
+    [lessonId]
+  );
+
+  const toggleVote = useCallback(
+    (targetVote: "yes" | "no") => {
+      const current = getLessonFeedback(lessonId);
+      const nextVote = current.vote === targetVote ? null : targetVote;
+      const res = recordLessonVote(lessonId, nextVote);
+      setFeedback(res);
+    },
+    [lessonId]
+  );
+
+  const clearVote = useCallback(() => {
+    const res = recordLessonVote(lessonId, null);
+    setFeedback(res);
+  }, [lessonId]);
+
+  const updateDetails = useCallback(
+    (tags: string[], comment?: string) => {
+      const current = getLessonFeedback(lessonId);
+      const res = recordLessonVote(lessonId, current.vote, tags, comment);
+      setFeedback(res);
+    },
+    [lessonId]
+  );
+
+  const totalVotes = feedback.yesCount + feedback.noCount;
+  const helpfulRate = totalVotes > 0 ? Math.round((feedback.yesCount / totalVotes) * 100) : 0;
+
+  return {
+    feedback,
+    vote,
+    toggleVote,
+    clearVote,
+    updateDetails,
+    totalVotes,
+    helpfulRate,
+    hasVoted: feedback.vote !== null,
+  };
 }

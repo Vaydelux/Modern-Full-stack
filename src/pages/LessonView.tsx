@@ -17,7 +17,11 @@ import { ChallengeBlock, Checkpoint, Flashcards, Quiz, SectionAnchor, slugify } 
 import { SectionDemo } from "../components/demos";
 import { Callout, CodeBlock, Reveal, SectionHeading, StatusBadge } from "../components/ui";
 import { TableOfContents, calculateLessonReadingStats } from "../components/TableOfContents";
+import { FloatingToc } from "../components/FloatingToc";
 import { PersistentLessonNav } from "../components/PersistentLessonNav";
+import { LessonFeedback } from "../components/LessonFeedback";
+import { CopyLessonButton } from "../components/CopyLessonButton";
+import { MarkAsReadButton } from "../components/MarkAsReadButton";
 import { ALL_LESSONS, lessonById } from "../data/curriculum";
 import { LESSON_CONTENT } from "../data/lessons";
 
@@ -63,12 +67,18 @@ export default function LessonView({ id }: { id: string }) {
               { label: lesson.title },
             ]}
           />
-          <div className="flex flex-wrap items-center gap-2 mt-5">
-            <StatusBadge status={lesson.status} />
-            <span className="chip"><Clock size={11} /> ~{lesson.minutes} min planned</span>
-            <span className="chip" style={{ textTransform: "none", letterSpacing: 0 }}>
-              <GraduationCap size={11} /> {phase.stage.replace("-", " ")} stage
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-2.5 mt-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={lesson.status} />
+              <span className="chip"><Clock size={11} /> ~{lesson.minutes} min planned</span>
+              <span className="chip" style={{ textTransform: "none", letterSpacing: 0 }}>
+                <GraduationCap size={11} /> {phase.stage.replace("-", " ")} stage
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MarkAsReadButton lessonId={lesson.id} lessonTitle={lesson.title} />
+              <CopyLessonButton lessonId={lesson.id} lessonTitle={lesson.title} />
+            </div>
           </div>
           <h1 className="font-display font-bold text-3xl md:text-4xl tracking-tight mt-3">{lesson.title}</h1>
           <p className="mt-4 leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -113,6 +123,8 @@ export default function LessonView({ id }: { id: string }) {
             <a href="#/roadmap" className="btn btn-soft btn-sm">Roadmap</a>
           </div>
 
+          <LessonFeedback lessonId={id} lessonTitle={lesson.title} />
+
           <PrevNext
             prev={prev ? { id: prev.id, title: prev.title } : undefined}
             next={next ? { id: next.id, title: next.title } : undefined}
@@ -137,26 +149,33 @@ export default function LessonView({ id }: { id: string }) {
           />
 
           <header className="mt-5 mb-8">
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status="implemented" />
-              <span className="chip"><GraduationCap size={11} /> {content.level}</span>
-              <span className="chip" title={`Planned curriculum time: ~${content.minutes} min`}>
-                <Clock size={11} /> ~{content.minutes} min planned
-              </span>
-              {readingStats && (
-                <span
-                  className="chip"
-                  title={`Estimated reading time based on ${readingStats.wordCount.toLocaleString()} words (~200 wpm)`}
-                  style={{
-                    background: "var(--brand-soft)",
-                    color: "var(--brand-ink)",
-                    borderColor: "var(--brand)",
-                  }}
-                >
-                  <BookOpen size={11} /> ~{readingStats.readingTimeMinutes} min read ({readingStats.wordCount.toLocaleString()} words)
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status="implemented" />
+                <span className="chip"><GraduationCap size={11} /> {content.level}</span>
+                <span className="chip" title={`Planned curriculum time: ~${content.minutes} min`}>
+                  <Clock size={11} /> ~{content.minutes} min planned
                 </span>
-              )}
-              <span className="chip"><Layers size={11} /> Phase {String(phase.n).padStart(2, "0")}</span>
+                {readingStats && (
+                  <span
+                    className="chip"
+                    title={`Estimated reading time based on ${readingStats.wordCount.toLocaleString()} words (~200 wpm)`}
+                    style={{
+                      background: "var(--brand-soft)",
+                      color: "var(--brand-ink)",
+                      borderColor: "var(--brand)",
+                    }}
+                  >
+                    <BookOpen size={11} /> ~{readingStats.readingTimeMinutes} min read ({readingStats.wordCount.toLocaleString()} words)
+                  </span>
+                )}
+                <span className="chip"><Layers size={11} /> Phase {String(phase.n).padStart(2, "0")}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <MarkAsReadButton lessonId={id} lessonTitle={content.title} />
+                <CopyLessonButton lessonId={id} lessonTitle={content.title} />
+              </div>
             </div>
             <h1 className="font-display font-bold text-3xl md:text-[2.6rem] tracking-tight mt-4 leading-[1.08]">
               {content.title}
@@ -405,6 +424,8 @@ export default function LessonView({ id }: { id: string }) {
             </section>
           )}
 
+          <LessonFeedback lessonId={id} lessonTitle={content.title} />
+
           <PrevNext
             prev={prev ? { id: prev.id, title: prev.title } : undefined}
             next={next ? { id: next.id, title: next.title } : undefined}
@@ -415,6 +436,9 @@ export default function LessonView({ id }: { id: string }) {
           <TableOfContents content={content} containerRef={lessonContainerRef} />
         </div>
       </div>
+
+      {/* Floating interactive Table of Contents for seamless reading navigation */}
+      <FloatingToc content={content} containerRef={lessonContainerRef} />
 
       <PersistentLessonNav currentId={id} />
     </div>

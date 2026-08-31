@@ -93,12 +93,13 @@ export function calculateLessonReadingStats(content: LessonContent): {
 }
 
 /**
- * Automatically detects <h2> and <h3> headings in the lesson and provides active-state scroll spy navigation.
+ * Hook to automatically detect <h2> and <h3> headings in the lesson and track active scroll state.
  */
-export function TableOfContents({ content, containerRef }: TableOfContentsProps) {
+export function useTocData({ content, containerRef }: TableOfContentsProps) {
   const [headings, setHeadings] = useState<TocHeading[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [scrollY, setScrollY] = useState<number>(0);
 
   // 1. Initial fallback extraction from structured content
   const fallbackHeadings = useMemo<TocHeading[]>(() => {
@@ -295,6 +296,9 @@ export function TableOfContents({ content, containerRef }: TableOfContentsProps)
 
     // Scroll progress tracker
     const handleScroll = () => {
+      const currentScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+      setScrollY(currentScrollY);
+
       const container = containerRef?.current || document.querySelector(".lesson");
       if (!container) return;
 
@@ -315,6 +319,26 @@ export function TableOfContents({ content, containerRef }: TableOfContentsProps)
       window.removeEventListener("scroll", handleScroll);
     };
   }, [headings, containerRef]);
+
+  const activeHeading = useMemo(() => {
+    return headings.find((h) => h.id === activeId) || headings[0];
+  }, [headings, activeId]);
+
+  return {
+    headings,
+    activeId,
+    setActiveId,
+    scrollProgress,
+    scrollY,
+    activeHeading,
+  };
+}
+
+/**
+ * Automatically detects <h2> and <h3> headings in the lesson and provides active-state scroll spy navigation.
+ */
+export function TableOfContents({ content, containerRef }: TableOfContentsProps) {
+  const { headings, activeId, setActiveId, scrollProgress } = useTocData({ content, containerRef });
 
   const handleHeadingClick = (id: string, e: React.MouseEvent) => {
     e.preventDefault();

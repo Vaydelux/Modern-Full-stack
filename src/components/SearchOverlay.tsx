@@ -461,7 +461,15 @@ function getPredictiveSuggestions(
   };
 }
 
-export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function SearchOverlay({
+  open,
+  onClose,
+  onOpenShortcuts,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onOpenShortcuts?: () => void;
+}) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
@@ -955,6 +963,19 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             <span><kbd>Tab</kbd> complete</span>
             <span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span>
             <span><kbd>↵</kbd> open</span>
+            {onOpenShortcuts && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenShortcuts();
+                }}
+                className="inline-flex items-center gap-1 hover:text-[var(--brand-ink)] transition-colors"
+              >
+                <kbd>?</kbd>
+                <span>all shortcuts</span>
+              </button>
+            )}
           </div>
           <span>{results.length} result{results.length === 1 ? "" : "s"} · Ranked by learning context</span>
         </div>

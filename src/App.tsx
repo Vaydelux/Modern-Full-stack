@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactElement } from "react";
 import { Compass } from "lucide-react";
 import { Footer, MobileDrawer, Sidebar, TopBar, UpdateToast } from "./components/chrome";
 import { SearchOverlay, useSearchHotkey } from "./components/SearchOverlay";
+import { ShortcutsHelperModal, useOmniGlobalShortcuts } from "./components/ShortcutsHelperModal";
 import { CelebrationOverlay } from "./components/CelebrationOverlay";
 import { lessonById } from "./data/curriculum";
 import { AppProviders } from "./lib/store";
@@ -50,7 +51,13 @@ function Shell() {
   const { name, param } = splitRoute(route);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  useSearchHotkey(() => setSearchOpen((v) => !v));
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  // Global hotkeys (Omni-Search, Shortcuts Helper, 'G' chords, study hotkeys)
+  useOmniGlobalShortcuts({
+    onToggleShortcuts: () => setShortcutsOpen((v) => !v),
+    onOpenSearch: () => setSearchOpen(true),
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -129,9 +136,23 @@ function Shell() {
       >
         Skip to content
       </a>
-      <TopBar route={route} onMenu={() => setMenuOpen(true)} onSearch={() => setSearchOpen(true)} />
+      <TopBar
+        route={route}
+        onMenu={() => setMenuOpen(true)}
+        onSearch={() => setSearchOpen(true)}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
+      />
       <MobileDrawer route={route} open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
+      />
+      <ShortcutsHelperModal
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+        onOpenSearch={() => setSearchOpen(true)}
+      />
       <CelebrationOverlay />
       <UpdateToast />
       <div className="flex flex-1 w-full max-w-full min-w-0">
